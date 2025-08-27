@@ -31,25 +31,36 @@ const login = async (req, res) => {
         const user = await UserModal.findOne({ email });
         const ErrorMsg = "Authorization failed, email or password is incorrect";
 
+        if (!user) {
+            return res.status(403)
+                .json({ message: ErrorMsg, success: false });
+        }
+
         const isPasswordEqual = await bcrypt.compare(password, user.password);
         if (!isPasswordEqual) {
             return res.status(403)
                 .json({ message: ErrorMsg, success: false });
         }
 
-        const jwtToken = jwt.sign({ email: user.email, _id: user._id }, process.env.JWT_SECRET, { expiresIn: '24h' }
-        )
-        res.status(200)
-            .json({
-                message: "Login successfully",
-                success: true,
-                jwtToken,
-                email,
-                name: user.name,
-            })
+        const jwtToken = jwt.sign(
+            { email: user.email, _id: user._id },
+            process.env.JWT_SECRET,
+            { expiresIn: '24h' }
+        );
+
+        res.status(200).json({
+            message: "Login successfully",
+            success: true,
+            jwtToken,
+            email,
+            name: user.name,
+        });
     } catch (err) {
-        res.status(500)
-            .json({ message: "Internal Server Error", success: false });
+        console.error('Login error:', err);
+        res.status(500).json({
+            message: "Internal Server Error",
+            success: false
+        });
     }
 };
 
